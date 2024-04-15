@@ -51,15 +51,4 @@ public class Utils {
                 .log ().all ();
     }
 
-    public static void getInfo () {
-        given ()
-                .header ("Accept", "application/json")
-                .header ("Content-Type", "application/json")
-                .when ()
-                .get ("/food")
-                .then ()
-                .log ().all ()
-                .assertThat ()
-                .body ("name", contains ("Огурец"));
-    }
 }
