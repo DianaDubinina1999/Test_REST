@@ -1,54 +1,75 @@
 package org.ibs;
 
-import io.restassured.RestAssured;
-import io.restassured.parsing.Parser;
-import io.restassured.http.ContentType;
+import io.restassured.response.Response;
+
 import static io.restassured.RestAssured.given;
-import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.*;
 
 public class Utils {
 
-    public static void postFood (String foodName, String foodType, boolean isExotic) {
-        RestAssured.defaultParser = Parser.JSON;
+    static String sessionID;
 
-        given ()
-                .basePath ("/food")
+    public static Response getFood () {
+        Response response = given ()
                 .header ("Accept", "application/json")
                 .header ("Content-Type", "application/json")
+                .when ()
+                .get ("/food");
+        sessionID = response.getCookie ("JSESSIONID");
+        return response;
+    }
+
+    public static void postFood (String foodName, String foodType, boolean isExotic) {
+        given ()
+                .header ("Accept", "application/json")
+                .header ("Content-Type", "application/json")
+                .cookie ("JSESSIONID", sessionID)
                 .body ("{\n" +
                         "  \"name\": \"" + foodName + "\",\n" +
                         "  \"type\": \"" + foodType + "\",\n" +
                         "  \"exotic\": " + isExotic + "\n" +
                         "}")
                 .when ()
-                .post ()
-                .then ()
-                .log ().all ()
-                .assertThat ()
-                //.contentType(ContentType.JSON)
-                .body ("name", equalTo (foodName));
-    }
-
-    public static void getFood () {
-        given ()
-                .header ("Accept", "application/json")
-                .header ("Content-Type", "application/json")
-                .when ()
-                .get ("/food")
+                .post ("/food")
                 .then ()
                 .log ().all ();
-    }
 
+    }
 
     public static void resetFood () {
         given ()
                 .header ("Accept", "application/json")
                 .header ("Content-Type", "application/json")
+                .cookie ("JSESSIONID", sessionID)
                 .when ()
                 .post ("/data/reset")
                 .then ()
                 .log ().all ();
     }
 
+    public static void getInfo (String foodName) {
+        given ()
+                .header ("Accept", "application/json")
+                .header ("Content-Type", "application/json")
+                .cookie ("JSESSIONID", sessionID)
+                .when ()
+                .get ("/food")
+                .then ()
+                .log ().all ()
+                .assertThat ()
+                .body ("name", hasItem (foodName));
+    }
+
+    public static void isTableBase () {
+        given ()
+                .header ("Accept", "application/json")
+                .header ("Content-Type", "application/json")
+                .cookie ("JSESSIONID", sessionID)
+                .when ()
+                .get ("/food")
+                .then ()
+                .log ().all ()
+                .assertThat ()
+                .body ("name", containsInAnyOrder ("Апельсин", "Капуста", "Помидор", "Яблоко"));
+    }
 }
